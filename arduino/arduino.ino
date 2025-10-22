@@ -5,7 +5,7 @@ String btCommand = "";
 unsigned long lastCharTime = 0;
 const unsigned long COMMAND_TIMEOUT = 2000; // 2 seconds
 
-int RELAY_PIN = D2;
+int RELAY_PIN = 2;
 
 void setup() {
     Serial.begin(115200);
@@ -14,7 +14,9 @@ void setup() {
     pinMode(RELAY_PIN, OUTPUT);
 }
 
-void handleCommand(const String& command) {
+void handleCommand(const String& input) {
+    String command = input;
+    command.trim();
     if (command == "on") {
         digitalWrite(RELAY_PIN, HIGH);
         Serial.println("Relay turned ON");
@@ -37,7 +39,7 @@ void loop() {
         lastCharTime = millis();
 
         if (c == '\n') {
-            handleCommand(btCommand.trim());
+            handleCommand(btCommand);
             btCommand = ""; // Reset for next command
         }
     }
