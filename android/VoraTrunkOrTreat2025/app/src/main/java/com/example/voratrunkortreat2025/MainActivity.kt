@@ -6,7 +6,10 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -14,9 +17,15 @@ import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
     private lateinit var toggleButton: SwitchMaterial
+    private lateinit var selectDeviceButton: Button
+    private lateinit var statusText: TextView
     private var btAdapter: BluetoothAdapter? = null
     private var bluetoothGatt: BluetoothGatt? = null
     private var commandCharacteristic: BluetoothGattCharacteristic? = null
+
+    // Store discovered devices
+    private val discoveredDevices = mutableListOf<BluetoothDevice>()
+    private var isScanning = false
 
     // BLE UUIDs
     private val SERVICE_UUID: UUID = UUID.fromString("dd3a359d-a0fb-49c2-9ba1-aae162aa2bdc")
@@ -36,7 +45,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         toggleButton = findViewById(R.id.toggleButton)
+        selectDeviceButton = findViewById(R.id.selectDeviceButton)
+        statusText = findViewById(R.id.statusText)
         toggleButton.isEnabled = false
+        updateStatusText(false)
 
         val btManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         btAdapter = btManager.adapter
@@ -49,12 +61,27 @@ class MainActivity : AppCompatActivity() {
 
         checkBlePermissions()
 
+        selectDeviceButton.setOnClickListener {
+            discoveredDevices.clear()
+            startBleScan()
+        }
+
         toggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 sendBleCommand(CMD_OPEN)
             } else {
                 sendBleCommand(CMD_CLOSE)
             }
+        }
+    }
+
+    private fun updateStatusText(connected: Boolean) {
+        // val status = if (connected == true) "Connected" else "Disconnected"
+        // statusText.setText("Status: $status")
+        if (connected) {
+            statusText.text = "Status: Connected"
+        } else {
+            statusText.text = "Status: Disconnected"
         }
     }
 
@@ -77,14 +104,14 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
 
-        if (missingPermissions.isNotEmpty()) {
+        if (missingPermissions.isEmpty()) {
+            selectDeviceButton.isEnabled = true
+        } else {
             ActivityCompat.requestPermissions(
                 this,
                 missingPermissions.toTypedArray(),
                 REQUEST_BLE_PERMISSIONS
             )
-        } else {
-            startBleScan()
         }
     }
 
@@ -95,48 +122,104 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        Toast.makeText(this, "Scanning for BLE devices...", Toast.LENGTH_SHORT).show()
+        if (isScanning) {
+            Toast.makeText(this, "Already scanning...", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Disconnect from current device if connected
+        bluetoothGatt?.close()
+        updateStatusText(false)
+        bluetoothGatt = null
+        commandCharacteristic = null
+        toggleButton.isEnabled = false
+
+        isScanning = true
+        discoveredDevices.clear()
+        Toast.makeText(this, "Scanning for devices...", Toast.LENGTH_SHORT).show()
+        selectDeviceButton.text = "Scanning..."
+        selectDeviceButton.isEnabled = false
 
         val bleScanner = btAdapter?.bluetoothLeScanner
         bleScanner?.startScan(scanCallback)
 
-        // Stop scan after 10 seconds
+        // Stop scan after 5 seconds and show results
         android.os.Handler(mainLooper).postDelayed({
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
                 == PackageManager.PERMISSION_GRANTED ||
                 android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
                 bleScanner?.stopScan(scanCallback)
-                if (bluetoothGatt == null) {
-                    Toast.makeText(this, "Device not found", Toast.LENGTH_LONG).show()
-                }
+                isScanning = false
+                selectDeviceButton.text = "Select Device"
+                selectDeviceButton.isEnabled = true
+                showDeviceSelectionDialog()
             }
-        }, 10000)
+        }, 5000)
     }
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.device?.let { device ->
-                if (ActivityCompat.checkSelfPermission(this@MainActivity,
-                        Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED &&
-                    android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    return
-                }
-
                 // Check if device has our service UUID
                 if (result.scanRecord?.serviceUuids?.any {
                         it.uuid == SERVICE_UUID
                     } == true) {
-                    btAdapter?.bluetoothLeScanner?.stopScan(this)
-                    connectToDevice(device)
+                    // Avoid duplicates
+                    if (!discoveredDevices.any { it.address == device.address }) {
+                        discoveredDevices.add(device)
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity,
+                                "Found device: ${getDeviceName(device)}",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
         }
 
         override fun onScanFailed(errorCode: Int) {
+            isScanning = false
             runOnUiThread {
+                selectDeviceButton.text = "Select Device"
+                selectDeviceButton.isEnabled = true
                 Toast.makeText(this@MainActivity, "Scan failed: $errorCode", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun getDeviceName(device: BluetoothDevice): String {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+            != PackageManager.PERMISSION_GRANTED &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            return device.address
+        }
+        return device.name ?: device.address
+    }
+
+    private fun showDeviceSelectionDialog() {
+        if (discoveredDevices.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("No Devices Found")
+                .setMessage("No BLE devices with the service UUID were found. Make sure your device is powered on and advertising.")
+                .setPositiveButton("OK", null)
+                .setNeutralButton("Scan Again") { _, _ -> startBleScan() }
+                .show()
+            return
+        }
+
+        val deviceNames = discoveredDevices.map { device ->
+            getDeviceName(device)
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Select Device (${discoveredDevices.size} found)")
+            .setItems(deviceNames) { _, which ->
+                val selectedDevice = discoveredDevices[which]
+                connectToDevice(selectedDevice)
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Scan Again") { _, _ -> startBleScan() }
+            .show()
     }
 
     private fun connectToDevice(device: BluetoothDevice) {
@@ -147,27 +230,40 @@ class MainActivity : AppCompatActivity() {
         }
 
         runOnUiThread {
-            Toast.makeText(this, "Connecting to ${device.name ?: "device"}...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Connecting to ${getDeviceName(device)}...", Toast.LENGTH_SHORT).show()
         }
 
-        bluetoothGatt = device.connectGatt(this, false, gattCallback)
+        bluetoothGatt = device.connectGatt(this, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
     }
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Connected! Discovering services...", Toast.LENGTH_SHORT).show()
+            when (newState) {
+                BluetoothProfile.STATE_CONNECTED -> {
+                    runOnUiThread {
+                        updateStatusText(true)
+                        Toast.makeText(this@MainActivity, "Connected! Discovering services...", Toast.LENGTH_SHORT).show()
+                    }
+                    if (ActivityCompat.checkSelfPermission(this@MainActivity,
+                            Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED ||
+                        android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+                        gatt?.discoverServices()
+                    }
                 }
-                if (ActivityCompat.checkSelfPermission(this@MainActivity,
-                        Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED ||
-                    android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-                    gatt?.discoverServices()
-                }
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Disconnected", Toast.LENGTH_SHORT).show()
-                    toggleButton.isEnabled = false
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    val statusMsg = when (status) {
+                        BluetoothGatt.GATT_SUCCESS -> "Disconnected normally"
+                        133 -> "Connection failed (GATT error 133) - Try again"
+                        8 -> "Connection timeout"
+                        19 -> "Device disconnected"
+                        22 -> "Device not found or not responding"
+                        else -> "Disconnected (status: $status)"
+                    }
+                    runOnUiThread {
+                        updateStatusText(false)
+                        Toast.makeText(this@MainActivity, statusMsg, Toast.LENGTH_LONG).show()
+                        toggleButton.isEnabled = false
+                    }
                 }
             }
         }
@@ -238,7 +334,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_BLE_PERMISSIONS) {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                startBleScan()
+                selectDeviceButton.isEnabled = true
             } else {
                 Toast.makeText(this, "BLE permissions required", Toast.LENGTH_LONG).show()
             }
