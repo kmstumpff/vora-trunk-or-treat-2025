@@ -2,4 +2,6 @@
     <string name="app_name">Vora TrunkOrTreat 2025</string>
     <string name="switch_label">Latch</string>
     <string name="select_device_button_label">Select Device</string>
+    <string name="status_text_connected">Status: Connected</string>
+    <string name="status_text_disconnected">Status: Disconnected</string>
 </resources>

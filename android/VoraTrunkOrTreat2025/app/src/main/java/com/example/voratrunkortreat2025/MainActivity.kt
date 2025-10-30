@@ -22,20 +22,21 @@ class MainActivity : AppCompatActivity() {
     private var btAdapter: BluetoothAdapter? = null
     private var bluetoothGatt: BluetoothGatt? = null
     private var commandCharacteristic: BluetoothGattCharacteristic? = null
-
+    private var statusCharacteristic: BluetoothGattCharacteristic? = null
+    
     // Store discovered devices
     private val discoveredDevices = mutableListOf<BluetoothDevice>()
     private var isScanning = false
-
+    
     // BLE UUIDs
     private val SERVICE_UUID: UUID = UUID.fromString("dd3a359d-a0fb-49c2-9ba1-aae162aa2bdc")
     private val COMMAND_CHAR_UUID: UUID = UUID.fromString("b1d3e840-56fb-41d8-9791-bd8566220d03")
     private val STATUS_CHAR_UUID: UUID = UUID.fromString("7c6479dd-f6c6-4f68-8f1f-0cb38a06b1d3")
-
+    
     // Commands
     private val CMD_OPEN: Byte = 0x01
     private val CMD_CLOSE: Byte = 0x00
-
+    
     companion object {
         private const val REQUEST_BLE_PERMISSIONS = 1
     }
@@ -43,29 +44,29 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        
         toggleButton = findViewById(R.id.toggleButton)
         selectDeviceButton = findViewById(R.id.selectDeviceButton)
         statusText = findViewById(R.id.statusText)
         toggleButton.isEnabled = false
         updateStatusText(false)
-
+        
         val btManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         btAdapter = btManager.adapter
-
+        
         if (btAdapter == null) {
             Toast.makeText(this, "Bluetooth not supported", Toast.LENGTH_LONG).show()
             finish()
             return
         }
-
+        
         checkBlePermissions()
-
+        
         selectDeviceButton.setOnClickListener {
             discoveredDevices.clear()
             startBleScan()
         }
-
+        
         toggleButton.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 sendBleCommand(CMD_OPEN)
@@ -79,12 +80,12 @@ class MainActivity : AppCompatActivity() {
         // val status = if (connected == true) "Connected" else "Disconnected"
         // statusText.setText("Status: $status")
         if (connected) {
-            statusText.text = "Status: Connected"
+            statusText.text = getString(R.string.status_text_connected)
         } else {
-            statusText.text = "Status: Disconnected"
+            statusText.text = getString(R.string.status_text_disconnected)
         }
     }
-
+    
     private fun checkBlePermissions() {
         val permissions = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             arrayOf(
@@ -99,11 +100,11 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }
-
+        
         val missingPermissions = permissions.filter {
             ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
-
+        
         if (missingPermissions.isEmpty()) {
             selectDeviceButton.isEnabled = true
         } else {
@@ -114,14 +115,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-
+    
     private fun startBleScan() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
-            != PackageManager.PERMISSION_GRANTED &&
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) 
+            != PackageManager.PERMISSION_GRANTED && 
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             return
         }
-
+        
         if (isScanning) {
             Toast.makeText(this, "Already scanning...", Toast.LENGTH_SHORT).show()
             return
@@ -133,20 +134,20 @@ class MainActivity : AppCompatActivity() {
         bluetoothGatt = null
         commandCharacteristic = null
         toggleButton.isEnabled = false
-
+        
         isScanning = true
         discoveredDevices.clear()
         Toast.makeText(this, "Scanning for devices...", Toast.LENGTH_SHORT).show()
         selectDeviceButton.text = "Scanning..."
         selectDeviceButton.isEnabled = false
-
+        
         val bleScanner = btAdapter?.bluetoothLeScanner
         bleScanner?.startScan(scanCallback)
-
+        
         // Stop scan after 5 seconds and show results
         android.os.Handler(mainLooper).postDelayed({
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
-                == PackageManager.PERMISSION_GRANTED ||
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) 
+                == PackageManager.PERMISSION_GRANTED || 
                 android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
                 bleScanner?.stopScan(scanCallback)
                 isScanning = false
@@ -156,27 +157,27 @@ class MainActivity : AppCompatActivity() {
             }
         }, 5000)
     }
-
+    
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.device?.let { device ->
                 // Check if device has our service UUID
-                if (result.scanRecord?.serviceUuids?.any {
-                        it.uuid == SERVICE_UUID
-                    } == true) {
+                if (result.scanRecord?.serviceUuids?.any { 
+                    it.uuid == SERVICE_UUID 
+                } == true) {
                     // Avoid duplicates
                     if (!discoveredDevices.any { it.address == device.address }) {
                         discoveredDevices.add(device)
                         runOnUiThread {
-                            Toast.makeText(this@MainActivity,
-                                "Found device: ${getDeviceName(device)}",
+                            Toast.makeText(this@MainActivity, 
+                                "Found device: ${getDeviceName(device)}", 
                                 Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             }
         }
-
+        
         override fun onScanFailed(errorCode: Int) {
             isScanning = false
             runOnUiThread {
@@ -186,16 +187,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    
     private fun getDeviceName(device: BluetoothDevice): String {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-            != PackageManager.PERMISSION_GRANTED &&
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) 
+            != PackageManager.PERMISSION_GRANTED && 
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             return device.address
         }
         return device.name ?: device.address
     }
-
+    
     private fun showDeviceSelectionDialog() {
         if (discoveredDevices.isEmpty()) {
             AlertDialog.Builder(this)
@@ -206,11 +207,11 @@ class MainActivity : AppCompatActivity() {
                 .show()
             return
         }
-
+        
         val deviceNames = discoveredDevices.map { device ->
             getDeviceName(device)
         }.toTypedArray()
-
+        
         AlertDialog.Builder(this)
             .setTitle("Select Device (${discoveredDevices.size} found)")
             .setItems(deviceNames) { _, which ->
@@ -221,21 +222,21 @@ class MainActivity : AppCompatActivity() {
             .setNeutralButton("Scan Again") { _, _ -> startBleScan() }
             .show()
     }
-
+    
     private fun connectToDevice(device: BluetoothDevice) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-            != PackageManager.PERMISSION_GRANTED &&
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) 
+            != PackageManager.PERMISSION_GRANTED && 
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             return
         }
-
+        
         runOnUiThread {
             Toast.makeText(this, "Connecting to ${getDeviceName(device)}...", Toast.LENGTH_SHORT).show()
         }
-
+        
         bluetoothGatt = device.connectGatt(this, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
     }
-
+    
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             when (newState) {
@@ -244,8 +245,8 @@ class MainActivity : AppCompatActivity() {
                         updateStatusText(true)
                         Toast.makeText(this@MainActivity, "Connected! Discovering services...", Toast.LENGTH_SHORT).show()
                     }
-                    if (ActivityCompat.checkSelfPermission(this@MainActivity,
-                            Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED ||
+                    if (ActivityCompat.checkSelfPermission(this@MainActivity, 
+                        Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || 
                         android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
                         gatt?.discoverServices()
                     }
@@ -267,25 +268,40 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
+        
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 val service = gatt?.getService(SERVICE_UUID)
                 commandCharacteristic = service?.getCharacteristic(COMMAND_CHAR_UUID)
-
-                if (commandCharacteristic != null) {
+                statusCharacteristic = service?.getCharacteristic(STATUS_CHAR_UUID)
+                
+                if (commandCharacteristic != null && statusCharacteristic != null) {
+                    // Enable notifications for status characteristic
+                    if (ActivityCompat.checkSelfPermission(this@MainActivity, 
+                        Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || 
+                        android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+                        gatt?.setCharacteristicNotification(statusCharacteristic, true)
+                        
+                        // Enable notifications on the device side (write to CCCD descriptor)
+                        val descriptor = statusCharacteristic?.getDescriptor(
+                            UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+                        )
+                        descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        gatt?.writeDescriptor(descriptor)
+                    }
+                    
                     runOnUiThread {
                         Toast.makeText(this@MainActivity, "Ready!", Toast.LENGTH_SHORT).show()
                         toggleButton.isEnabled = true
                     }
                 } else {
                     runOnUiThread {
-                        Toast.makeText(this@MainActivity, "Command characteristic not found", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "Characteristics not found", Toast.LENGTH_LONG).show()
                     }
                 }
             }
         }
-
+        
         override fun onCharacteristicWrite(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
@@ -303,29 +319,50 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            if (characteristic?.uuid == STATUS_CHAR_UUID) {
+                val statusValue = characteristic.value?.get(0) ?: return
+                runOnUiThread {
+                    // Update toggle without triggering the listener
+                    toggleButton.setOnCheckedChangeListener(null)
+                    toggleButton.isChecked = (statusValue == CMD_OPEN)
+                    toggleButton.setOnCheckedChangeListener { _, isChecked ->
+                        if (isChecked) {
+                            sendBleCommand(CMD_OPEN)
+                        } else {
+                            sendBleCommand(CMD_CLOSE)
+                        }
+                    }
+                }
+            }
+        }
     }
-
+    
     private fun sendBleCommand(command: Byte) {
         commandCharacteristic?.let { char ->
             char.value = byteArrayOf(command)
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-                != PackageManager.PERMISSION_GRANTED &&
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) 
+                != PackageManager.PERMISSION_GRANTED && 
                 android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 return
             }
             bluetoothGatt?.writeCharacteristic(char)
         }
     }
-
+    
     override fun onDestroy() {
         super.onDestroy()
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
-            == PackageManager.PERMISSION_GRANTED ||
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) 
+            == PackageManager.PERMISSION_GRANTED || 
             android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
             bluetoothGatt?.close()
         }
     }
-
+    
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
