@@ -100,6 +100,24 @@ void BLELatchService::update() {
             lastUpdate = millis();
         }
     }
+
+    // handle serial debug input
+    while (Serial.available()) {
+        char cmd = Serial.read();
+        switch (cmd) {
+            case 'o':
+                debug("[DEBUG] Sending OPEN command\n");
+                handleCommand(BLE_CMD_OPEN);
+                break;
+            case 'c':
+                debug("[DEBUG] Sending CLOSE command\n");
+                handleCommand(BLE_CMD_CLOSE);
+                break;
+            default:
+                debug("[DEBUG] Unknown debug command: %c\n", cmd);
+                break;
+        }
+    }
 }
 
 BLELatchService::ServerCallbacks::ServerCallbacks(BLELatchService* parent) : _parent(parent) {}

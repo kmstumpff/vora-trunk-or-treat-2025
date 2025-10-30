@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "LatchService/BTClassicLatchService.h"
 #include <BluetoothSerial.h>
+#include "constants.h"
 
 BTClassicLatchService::BTClassicLatchService(ILatch* latch): ILatchService(latch) {}
 
@@ -76,4 +77,22 @@ void BTClassicLatchService::update() {
         }
         _lastBTUpdate = millis();
     } 
+
+    // handle serial debug input
+    while (Serial.available()) {
+        char cmd = Serial.read();
+        switch (cmd) {
+            case 'o':
+                debug("[DEBUG] Sending OPEN command\n");
+                handleCommand("on");
+                break;
+            case 'c':
+                debug("[DEBUG] Sending CLOSE command\n");
+                handleCommand("off");
+                break;
+            default:
+                debug("[DEBUG] Unknown debug command: %c\n", cmd);
+                break;
+        }
+    }
 }
