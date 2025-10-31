@@ -2,9 +2,6 @@
 
 #include <Arduino.h>
 
-// #define _DEBUG                    // Set debug mode, results in more verbose output on serial port
-#include "constants.h"
-
 #define USE_BLE true // set to 'true' to use BLE instead of Classic SPP
 #define USE_DUMMY_LATCH true // set to 'true' to use DummyLatch for testing
 

@@ -1,5 +1,7 @@
 #pragma once
 
+// #define _DEBUG  // Set debug mode, results in more verbose output on serial port
+
 // Boards
 #define BOARD_NRF52_FEATHER 0
 #define BOARD_ESP32_DEVKITV1 1

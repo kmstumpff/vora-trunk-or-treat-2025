@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "LatchService/BLELatchService.h"
+#include "LatchService/LatchService.h"
 #include "configuration.h"
 
 // Create latch instance
@@ -11,15 +11,15 @@ DummyLatch latch;
 ESPServoLatch latch(SERVO_PIN, 25);
 #endif
 
-// Create BLE service with the latch
-BLELatchService bleService(&latch);
+// Create Latch service with the latch
+LatchService latchService(&latch);
 
 void setup() {
     Serial.begin(115200);
     delay(10000);
     
     Serial.println("\n=================================");
-    Serial.println("ESP32 BLE Latch Controller");
+    Serial.println("ESP32 Latch Controller");
     Serial.println("=================================\n");
     
     // Initialize the latch hardware
@@ -27,10 +27,10 @@ void setup() {
         Serial.println("[ERROR] Failed to initialize latch!");
         while (1) { delay(1000); }
     }
-    
-    // Initialize BLE service
-    if (!bleService.begin(BT_NAME.c_str())) {
-        Serial.println("[ERROR] Failed to initialize BLE service!");
+
+    // Initialize Latch service
+    if (!latchService.begin(BT_NAME.c_str())) {
+        Serial.println("[ERROR] Failed to initialize Latch service!");
         while (1) { delay(1000); }
     }
     
@@ -40,9 +40,9 @@ void setup() {
 }
 
 void loop() {
-    // Update BLE service
-    bleService.update();
-    
+    // Update Latch service
+    latchService.update();
+
     // Add any other periodic tasks here
     delay(100);
 }

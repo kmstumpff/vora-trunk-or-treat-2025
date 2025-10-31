@@ -84,6 +84,7 @@ bool BLELatchService::begin(const char* deviceName) {
     BLEDevice::startAdvertising();
     
     Serial.println("[BLE] Service started");
+    debug("[BLE] Address: %s\n", BLEDevice::getAddress().toString().c_str());
     debug("[BLE] Device name: %s\n", deviceName);
     debug("[BLE] Service UUID: %s\n", BLE_SERVICE_UUID);
     Serial.println("[BLE] Waiting for connections...");
