@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Candy Controller",
+    "slug": "candy-controller",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "src/assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "candycontroller",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.talentnow.candycontroller"
+    },
+    "android": {
+      "package": "ai.talentnow.candycontroller"
+    },
+    "web": {
+      "favicon": "src/assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ff6600",
+          "image": "src/assets/images/splash-icon.png",
+          "imageWidth": "200",
+          "resizeMode": "contain"
+        }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": true,
+          "modes": ["peripheral", "central"],
+          "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to connect to bluetooth devices"
+        }
+      ]
+    ]
+  }
+}
