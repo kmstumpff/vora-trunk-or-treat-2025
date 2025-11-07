@@ -1,4 +1,4 @@
 export * from "./AppText/AppText";
 export * from "./Button/Button";
-export * from "./ScreenDefaultContainer/ScreenDefaultContainer";
+export * from "./ScreenContainer/ScreenContainer";
 export * from "./StateDisplay/StateDisplay";

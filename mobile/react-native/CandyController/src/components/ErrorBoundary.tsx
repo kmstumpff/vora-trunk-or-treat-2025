@@ -1,16 +1,14 @@
 // Example ErrorBoundary.tsx
-import React from "react";
-import { Text } from "react-native";
+import React from 'react';
+import { Text } from 'react-native';
 
-export default class ErrorBoundary extends React.Component<
-  React.PropsWithChildren<{}>
-> {
+export default class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>> {
   state = { hasError: false, error: null };
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
   }
   componentDidCatch(error: any, info: any) {
-    console.error("ErrorBoundary caught:", error, info);
+    console.error('ErrorBoundary caught:', error, info);
   }
   render() {
     if (this.state.hasError) {

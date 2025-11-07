@@ -1,7 +1,7 @@
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React from "react";
-import * as screenComponents from "../../screens";
-import { useCommonScreenOptions } from "../components";
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
+import * as screenComponents from '../../screens';
+import { useCommonScreenOptions } from '../components';
 
 export type MainStackParamList = {
   DASHBOARD_SCREEN: undefined;
@@ -20,14 +20,14 @@ export function MainStackComponent() {
         name="DASHBOARD_SCREEN"
         component={screenComponents.DashboardScreen}
         options={{
-          headerTitle: "Candy Controller",
+          headerTitle: 'Candy Controller',
         }}
       />
       <MainStack.Screen
         name="DEVICE_CONNECT_SCREEN"
         component={screenComponents.DeviceConnectScreen}
         options={{
-          headerTitle: "Connect",
+          headerTitle: 'Connect',
           headerBackVisible: true,
         }}
       />
@@ -35,7 +35,7 @@ export function MainStackComponent() {
         name="DEVICE_DETAILS_SCREEN"
         component={screenComponents.DeviceDetailsScreen}
         options={{
-          headerTitle: "Device Details",
+          headerTitle: 'Device Details',
           headerBackVisible: true,
         }}
       />

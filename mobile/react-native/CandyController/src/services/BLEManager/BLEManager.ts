@@ -1,5 +1,5 @@
-import BaseDevice from "@/devices/BaseDevice";
-import { PermissionsAndroid, Platform } from "react-native";
+import BaseDevice from '@/devices/BaseDevice';
+import { PermissionsAndroid, Platform } from 'react-native';
 import {
   BleError,
   BleErrorCode,
@@ -9,10 +9,10 @@ import {
   LogLevel,
   type DeviceId,
   type UUID,
-} from "react-native-ble-plx";
-import Toast from "react-native-toast-message";
+} from 'react-native-ble-plx';
+import Toast from 'react-native-toast-message';
 
-const deviceNotConnectedErrorText = "Device is not connected";
+const deviceNotConnectedErrorText = 'Device is not connected';
 
 export class BLEManager {
   manager: BleManager;
@@ -44,7 +44,7 @@ export class BLEManager {
       const subscription = this.manager.onStateChange((state) => {
         switch (state) {
           case BluetoothState.Unsupported:
-            this.showErrorToast("");
+            this.showErrorToast('');
             break;
           case BluetoothState.PoweredOff:
             this.onBluetoothPowerOff();
@@ -62,7 +62,7 @@ export class BLEManager {
             subscription.remove();
             break;
           default:
-            console.error("Unsupported state: ", state);
+            console.error('Unsupported state: ', state);
           // resolve()
           // subscription.remove()
         }
@@ -79,10 +79,10 @@ export class BLEManager {
     try {
       this.notifyDeviceListeners(null);
       await this.device.rawDevice.cancelConnection();
-      this.showSuccessToast("Device disconnected");
+      this.showSuccessToast('Device disconnected');
       this.device = null;
     } catch (error: any) {
-      console.error("Disconnect error:", error);
+      console.error('Disconnect error:', error);
       if (error?.code !== BleErrorCode.DeviceDisconnected) {
         this.onError(error);
       }
@@ -90,14 +90,10 @@ export class BLEManager {
   };
 
   onBluetoothPowerOff = () => {
-    this.showErrorToast("Bluetooth is turned off");
+    this.showErrorToast('Bluetooth is turned off');
   };
 
-  scanDevices = async (
-    onDeviceFound: (device: Device) => void,
-    UUIDs: UUID[] | null = null,
-    legacyScan?: boolean
-  ) => {
+  scanDevices = async (onDeviceFound: (device: Device) => void, UUIDs: UUID[] | null = null, legacyScan?: boolean) => {
     this.manager
       .startDeviceScan(UUIDs, { legacyScan }, (error, device) => {
         if (error) {
@@ -130,10 +126,7 @@ export class BLEManager {
           resolve(device);
         })
         .catch((error) => {
-          if (
-            error.errorCode === BleErrorCode.DeviceAlreadyConnected &&
-            this.device
-          ) {
+          if (error.errorCode === BleErrorCode.DeviceAlreadyConnected && this.device) {
             resolve(this.device.rawDevice);
           } else {
             this.onError(error);
@@ -158,7 +151,7 @@ export class BLEManager {
         this.requestBluetoothPermission();
         break;
       case BleErrorCode.LocationServicesDisabled:
-        this.showErrorToast("Location services are disabled");
+        this.showErrorToast('Location services are disabled');
         break;
       default:
         this.showErrorToast(JSON.stringify(error, null, 4));
@@ -166,48 +159,38 @@ export class BLEManager {
   };
 
   requestBluetoothPermission = async () => {
-    if (Platform.OS === "ios") {
+    if (Platform.OS === 'ios') {
       return true;
     }
-    if (Platform.OS === "android") {
+    if (Platform.OS === 'android') {
       const apiLevel = parseInt(Platform.Version.toString(), 10);
 
-      if (
-        apiLevel < 31 &&
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      ) {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-        );
+      if (apiLevel < 31 && PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION) {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
         return granted === PermissionsAndroid.RESULTS.GRANTED;
       }
-      if (
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN &&
-        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
-      ) {
+      if (PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN && PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT) {
         const result = await PermissionsAndroid.requestMultiple([
           PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
           PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
         ]);
 
         return (
-          result["android.permission.BLUETOOTH_CONNECT"] ===
-            PermissionsAndroid.RESULTS.GRANTED &&
-          result["android.permission.BLUETOOTH_SCAN"] ===
-            PermissionsAndroid.RESULTS.GRANTED
+          result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
+          result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED
         );
       }
     }
 
-    this.showErrorToast("Permission have not been granted");
+    this.showErrorToast('Permission have not been granted');
 
     return false;
   };
 
   showErrorToast = (error: string) => {
     Toast.show({
-      type: "error",
-      text1: "Error",
+      type: 'error',
+      text1: 'Error',
       text2: error,
     });
     console.error(error);
@@ -215,8 +198,8 @@ export class BLEManager {
 
   showSuccessToast = (info: string) => {
     Toast.show({
-      type: "success",
-      text1: "Success",
+      type: 'success',
+      text1: 'Success',
       text2: info,
     });
   };

@@ -1,14 +1,8 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
-import BaseDevice from "@/devices/BaseDevice";
-import LatchDevice from "@/devices/LatchDevice";
-import { BLEManager } from "@/services";
+import BaseDevice from '@/devices/BaseDevice';
+import LatchDevice from '@/devices/LatchDevice';
+import { BLEManager } from '@/services';
 
 export interface LatchProviderProps {
   children: React.ReactNode;
@@ -62,7 +56,7 @@ export function LatchProvider({ children }: LatchProviderProps) {
         setDevice(null);
       }
     } catch (error) {
-      console.error("Disconnect error:", error);
+      console.error('Disconnect error:', error);
     }
   };
 
@@ -74,8 +68,7 @@ export function LatchProvider({ children }: LatchProviderProps) {
           isConnected,
           disconnect,
           bleManager,
-        }}
-      >
+        }}>
         {children}
       </LatchContext.Provider>
     </>
@@ -85,7 +78,7 @@ export function LatchProvider({ children }: LatchProviderProps) {
 export function useLatch() {
   const context = useContext(LatchContext);
   if (!context) {
-    throw new Error("useLatch must be used within LatchProvider");
+    throw new Error('useLatch must be used within LatchProvider');
   }
   return context;
 }

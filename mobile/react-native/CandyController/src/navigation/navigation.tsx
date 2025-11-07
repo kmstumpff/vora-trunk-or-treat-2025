@@ -1,15 +1,15 @@
-import { DefaultTheme, NavigationContainer } from "@react-navigation/native";
-import React from "react";
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import React from 'react';
 
-import { MainStackComponent, type MainStackParamList } from "./navigators";
+import { MainStackComponent, type MainStackParamList } from './navigators';
 
 const mainTheme = {
   ...DefaultTheme,
   dark: false,
   colors: {
     ...DefaultTheme.colors,
-    card: "white",
-    background: "white",
+    card: 'white',
+    background: 'white',
   },
 };
 

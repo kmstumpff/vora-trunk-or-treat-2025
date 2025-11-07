@@ -1,19 +1,13 @@
-import { useLatch } from "@/contexts/LatchContext";
-import { LatchStatus } from "@/types/LatchStatus";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import React, { useEffect } from "react";
-import { ScrollView } from "react-native";
-import {
-  AppButton,
-  AppText,
-  ScreenDefaultContainer,
-} from "../../../components/atoms";
-import type { MainStackParamList } from "../../../navigation/navigators";
+import { BleDevice } from '@/components/molecules';
+import { useLatch } from '@/contexts/LatchContext';
+import { LatchStatus } from '@/types/LatchStatus';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useEffect } from 'react';
+import { ScrollView } from 'react-native';
+import { AppButton, AppText, CenteredScreenContainer } from '../../../components/atoms';
+import type { MainStackParamList } from '../../../navigation/navigators';
 
-type DeviceDetailsScreenProps = NativeStackScreenProps<
-  MainStackParamList,
-  "DEVICE_DETAILS_SCREEN"
->;
+type DeviceDetailsScreenProps = NativeStackScreenProps<MainStackParamList, 'DEVICE_DETAILS_SCREEN'>;
 
 export function DeviceDetailsScreen(_props: DeviceDetailsScreenProps) {
   const { device } = useLatch();
@@ -39,14 +33,15 @@ export function DeviceDetailsScreen(_props: DeviceDetailsScreenProps) {
   };
 
   return (
-    <ScreenDefaultContainer>
+    <CenteredScreenContainer>
       <ScrollView>
-        <AppText>
-          Device is currently: {isLocked ? "Locked" : "Unlocked"}
+        <AppText style={{ marginBottom: 20, textAlign: 'center' }}>
+          Device is currently: {isLocked ? 'Locked' : 'Unlocked'}
         </AppText>
         <AppButton label="Toggle" onPress={toggleDevice} />
-        <AppText>{device?.getDetails()}</AppText>
+        {/* <AppText>{device?.getDetails()}</AppText> */}
+        {device?.rawDevice && <BleDevice device={device?.rawDevice} />}
       </ScrollView>
-    </ScreenDefaultContainer>
+    </CenteredScreenContainer>
   );
 }

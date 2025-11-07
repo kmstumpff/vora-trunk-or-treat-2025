@@ -1,10 +1,4 @@
-import {
-  BleError,
-  Device,
-  type Base64,
-  type Characteristic,
-  type UUID,
-} from "react-native-ble-plx";
+import { BleError, Device, type Base64, type Characteristic, type UUID } from 'react-native-ble-plx';
 
 export default class BaseDevice {
   rawDevice: Device;
@@ -23,7 +17,7 @@ export default class BaseDevice {
         this.hasBeenInitialized = true;
       }
     } catch (error) {
-      console.error("Initialization error:", error);
+      console.error('Initialization error:', error);
     }
   }
 
@@ -31,11 +25,7 @@ export default class BaseDevice {
     return this.rawDevice.name;
   }
 
-  async startStatusNotifications(
-    serviceUUID: UUID,
-    statusCharacteristic: UUID,
-    callback?: (data: string) => void
-  ) {
+  async startStatusNotifications(serviceUUID: UUID, statusCharacteristic: UUID, callback?: (data: string) => void) {
     if (this.subscription) {
       this.subscription.remove();
       this.subscription = null;
@@ -46,7 +36,7 @@ export default class BaseDevice {
       statusCharacteristic,
       (error: BleError | null, characteristic: Characteristic | null) => {
         if (error) {
-          console.error("Status notification error:", error);
+          console.error('Status notification error:', error);
           return;
         }
         // this.handleStatusUpdate(characteristic);
@@ -61,24 +51,16 @@ export default class BaseDevice {
 
   decodeStatus(base64Value: Base64): string {
     // Override in child class
-    throw new Error("decodeStatus must be implemented");
+    throw new Error('decodeStatus must be implemented');
   }
 
-  async writeCommand(
-    serviceUUID: UUID,
-    statusCharacteristic: UUID,
-    commandData: any
-  ) {
+  async writeCommand(serviceUUID: UUID, statusCharacteristic: UUID, commandData: any) {
     const base64Data = this.encodeCommand(commandData);
-    await this.rawDevice.writeCharacteristicWithResponseForService(
-      serviceUUID,
-      statusCharacteristic,
-      base64Data
-    );
+    await this.rawDevice.writeCharacteristicWithResponseForService(serviceUUID, statusCharacteristic, base64Data);
   }
 
   encodeCommand(commandData: any): Base64 {
     // Override in child class
-    throw new Error("encodeCommand must be implemented");
+    throw new Error('encodeCommand must be implemented');
   }
 }
